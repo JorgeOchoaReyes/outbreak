@@ -1,0 +1,48 @@
+name: Publish SDKs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - run: npm ci
+
+      - name: Find changed packages
+        id: changed
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'packages/' \
+            | grep -oP 'packages/[^/]+' \
+            | sort -u \
+            | tr '\n' ' ')
+          echo "packages=$CHANGED" >> "$GITHUB_OUTPUT"
+          echo "Changed packages: $CHANGED"
+
+      - name: Build and publish changed packages
+        if: steps.changed.outputs.packages != ''
+        run: |
+          for pkg in ${{ steps.changed.outputs.packages }}; do
+            echo "--- Building $pkg ---"
+            cd "$pkg"
+            npm run build
+            npm publish
+            cd ../..
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
