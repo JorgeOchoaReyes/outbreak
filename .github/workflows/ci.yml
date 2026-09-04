@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Typecheck the pipeline
+        run: npm run typecheck
+
+      - name: Typecheck and test generated packages
+        run: |
+          if ls packages/*/package.json >/dev/null 2>&1; then
+            npm run typecheck --workspaces --if-present
+            npm test --workspaces --if-present
+          else
+            echo "No generated packages yet - nothing to check."
+          fi

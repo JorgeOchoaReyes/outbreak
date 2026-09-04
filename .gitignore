@@ -4,3 +4,4 @@ packages/**/dist/
 dist/
 .env
 *.js.map
+packages/**/.outbreak-spec
