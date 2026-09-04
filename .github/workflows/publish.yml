@@ -36,13 +36,18 @@ jobs:
 
       - name: Build and publish changed packages
         if: steps.changed.outputs.packages != ''
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN is not set - building only, skipping publish."
+          fi
           for pkg in ${{ steps.changed.outputs.packages }}; do
             echo "--- Building $pkg ---"
             cd "$pkg"
             npm run build
-            npm publish
+            if [ -n "$NODE_AUTH_TOKEN" ]; then
+              npm publish
+            fi
             cd ../..
           done
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

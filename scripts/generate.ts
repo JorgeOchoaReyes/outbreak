@@ -47,7 +47,8 @@ async function main() {
 
   if (!values['skip-pr']) {
     next('Creating PR...');
-    createPR(name, await readDescription(name));
+    const url = await createPR(name, await readDescription(name));
+    console.log(`      ${url}`);
   }
 
   console.log(`\nDone! @outbreak/${name} is ready.\n`);
